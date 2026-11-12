@@ -8,6 +8,8 @@ build/
 venv/
 .env
 *.so
+librbk_kernels.so
+fill_capacity.so
 *.fvecs
 *.ivecs
 *.npy

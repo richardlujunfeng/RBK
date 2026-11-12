@@ -6,6 +6,8 @@ from typing import Tuple
 
 import numpy as np
 
+from .native import accumulate_sums_cpp
+
 
 def cluster_means(
     X: np.ndarray,
@@ -17,8 +19,10 @@ def cluster_means(
     """Compute per-cluster means; reseed empty clusters from data."""
     counts = np.bincount(ids, minlength=K).astype(np.int64)
     D = X.shape[1]
-    sums = np.zeros((K, D), dtype=np.float64)
-    np.add.at(sums, ids, X.astype(np.float64, copy=False))
+    sums = accumulate_sums_cpp(X, ids, K)
+    if sums is None:
+        sums = np.zeros((K, D), dtype=np.float64)
+        np.add.at(sums, ids, X.astype(np.float64, copy=False))
     C_mean = C_fallback.astype(np.float32).copy()
     nz = counts > 0
     C_mean[nz] = (sums[nz] / counts[nz, None]).astype(np.float32)

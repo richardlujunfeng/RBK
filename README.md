@@ -8,7 +8,10 @@ RBK extends Lloyd iterations with approximate nearest-centroid search, capacity-
 
 ```bash
 pip install -r requirements.txt
+make            # build C++ OpenMP kernels (g++ -O3/-Ofast -march=core-avx2)
 ```
+
+Hot paths in `cpp/rbk_kernels.cpp` (capacity fill, centroid sum accumulation, SSE) are implemented in C++ with OpenMP and loaded from Python via ctypes. If the shared library is missing, pure-Python fallbacks are used.
 
 ## Hyperparameters (`RBKConfig` in `rbk/algorithm.py`)
 
@@ -46,17 +49,9 @@ C, ids, counts, hist = train_rbk(X, C0, RBKConfig())
 
 ## Run on ANN datasets
 
-Prepare a base set as `.fvecs`, `.npy`, or a directory with `<name>_base.fvecs` / `<name>_base.npy` (e.g. `sift/sift_base.fvecs`).
+Prepare a base set as `.fvecs`, `.npy`, or a directory with `<name>_base.fvecs` / `<name>_base.npy`.
 
 ```bash
-# directory form
 python run_ann.py --data /path/to/sift --k 4096 --iters 12 --alpha 1.2 --L 24 --beta 0.1 --threads 8
-
-# explicit file
 python run_ann.py --data /path/to/gist/gist_base.fvecs --k 4096 --iters 12
-
-# optional flags
-python run_ann.py --data /path/to/sift --no-swap --no-merge
 ```
-
-`run_ann.py` loads the base vectors, initializes centroids with Faiss k-means++, then runs RBK and prints per-iteration SSE / CV.

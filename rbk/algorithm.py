@@ -18,6 +18,7 @@ import numpy as np
 from .assign import high_regret_capacity_assign
 from .hnsw import build_centroid_hnsw, drifted_mask, search_topk
 from .merge import merge_tiny_into_underfull
+from .native import sum_sq_cpp
 from .swap import constrained_swap
 from .update import cluster_means, damped_centroid_update
 
@@ -60,7 +61,9 @@ class RBKConfig:
 
 
 def _sum_sq(X: np.ndarray, C: np.ndarray, ids: np.ndarray) -> float:
-    # batch to limit memory
+    v = sum_sq_cpp(X, C, ids)
+    if v is not None:
+        return v
     total = 0.0
     bs = 65536
     for s in range(0, X.shape[0], bs):

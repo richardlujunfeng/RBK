@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from .native import fill_capacity_cpp
+
 
 def fill_capacity(
     order: np.ndarray,
@@ -11,11 +13,14 @@ def fill_capacity(
 ) -> np.ndarray:
     """
     Greedy assign points in ``order`` to the first neighbor with remaining capacity.
-    Unassigned points keep id = -1.
+    Unassigned points keep id = -1. Prefers the C++ kernel when available.
     """
+    rem = np.ascontiguousarray(rem, dtype=np.int32)
+    ids = fill_capacity_cpp(order, neigh, rem)
+    if ids is not None:
+        return ids
     n, L = neigh.shape
     ids = np.full(n, -1, dtype=np.int32)
-    rem = rem.astype(np.int32, copy=True)
     for i in order:
         i = int(i)
         for t in range(L):
